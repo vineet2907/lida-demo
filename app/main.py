@@ -45,6 +45,7 @@ def render_chart(code):
     else:
         st.warning("No plot function found in the generated code.")
 
+st.set_page_config(layout="wide")
 st.title("LIDA demonstration")
 st.write("Automatic Generation of Visualizations and Infographics using Large Language Models")
 
@@ -70,8 +71,9 @@ summarize_tab, goals_tab, viz_tab = st.tabs(["Summarize", "Goals", "Visualizatio
 
 with summarize_tab:
     if st.button("Generate Summary"):
-        lida_mgr.summarize_and_store(df)
-        render_summary(lida_mgr.summary)
+        with st.spinner("Generating summary with LIDA..."):
+            lida_mgr.summarize(df)
+            render_summary(lida_mgr.summary)
     elif lida_mgr.summary:
         render_summary(lida_mgr.summary)
 
@@ -80,7 +82,8 @@ with goals_tab:
         persona = st.text_input("Enter persona for goal generation (e.g., Store Manager, Category Manager, etc.)")
         if persona:
             if lida_mgr.persona != persona or not lida_mgr.goals:
-                lida_mgr.generate_goals_and_store(persona)
+                with st.spinner("Generating goals for persona..."):
+                    lida_mgr.generate_goals(persona)
             if lida_mgr.goals:
                 lida_mgr.selected_goal = render_goals(lida_mgr.goals, lida_mgr.selected_goal)
     else:
@@ -91,17 +94,38 @@ with viz_tab:
         goal = lida_mgr.selected_goal
         st.write(f"**{goal.question}**")
         st.write(goal.rationale)
-        vizs = lida_mgr.generate_chart()
+        with st.spinner("Generating visualizations..."):
+            vizs = lida_mgr.generate_chart()
         viz_titles = [f'Visualization {i+1}' for i in range(len(vizs))]
         selected_viz_title = st.selectbox('Choose a visualization', options=viz_titles, index=0)
         selected_viz = vizs[viz_titles.index(selected_viz_title)]
-        code = selected_viz.code
-        if code:
-            render_chart(code)
-        else:
-            st.warning("No code found for the selected visualization.")
-        st.write("### Visualization Code")
-        st.code(selected_viz.code)
-        
+        lida_mgr.chart_code = selected_viz.code
+        chart, chart_edits = st.columns([2, 1])
+        with chart_edits:
+            modifications = st.text_area(
+                "Enter any modifications you want in the generated chart (e.g., change color, add title, etc.). Each modification should be on a separate line.",
+                value="",
+                key="chart_modifications"
+            )
+            if st.button("Apply Modifications"):
+                mod_list = [m.strip() for m in modifications.splitlines() if m.strip()]
+                if mod_list:
+                    with st.spinner("Editing visualization..."):
+                        edited_vizs = lida_mgr.edit_chart(mod_list)
+                    if edited_vizs:
+                        lida_mgr.chart_code = edited_vizs[0].code
+                        st.write("You requested the following modifications:")
+                        for mod in mod_list:
+                            st.write(f"- {mod}")
+                    else:
+                        st.warning("No edited visualizations returned.")
+        with chart:
+            if lida_mgr.chart_code:
+                render_chart(lida_mgr.chart_code)
+            else:
+                st.warning("No code found for the selected visualization.")
+
+        with st.expander("Show Visualization Code", expanded=False):
+            st.code(lida_mgr.chart_code)
     else:
         st.info("Select a goal in the 'Goals' tab to enable visualizations.")

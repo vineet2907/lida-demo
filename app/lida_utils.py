@@ -9,8 +9,9 @@ class LidaManager:
         self.goals = []
         self.persona = ""
         self.selected_goal = None
+        self.chart_code = None
 
-    def summarize_and_store(self, df):
+    def summarize(self, df):
         textgen_config = TextGenerationConfig(
             n=1,
             temperature=0,
@@ -18,10 +19,10 @@ class LidaManager:
         )
         self.summary = self.lida_mgr.summarize(df, summary_method="llm", textgen_config=textgen_config)
 
-    def generate_goals_and_store(self, persona: str, n: int = 3):
+    def generate_goals(self, persona: str, n: int = 3):
         textgen_config = TextGenerationConfig(
             n=1,
-            temperature=0,
+            temperature=0.4,
             model=self.model
         )
 
@@ -37,15 +38,30 @@ class LidaManager:
     def generate_chart(self):
         textgen_config = TextGenerationConfig(
             n=1,
-            temperature=0,
+            temperature=0.4,
             model=self.model
         )
 
         chart_result = self.lida_mgr.visualize(
             summary=self.summary,
             goal=self.selected_goal,
-            textgen_config=textgen_config,
-            library="matplotlib"
+            textgen_config=textgen_config
+        )
+
+        return chart_result
+    
+    def edit_chart(self, modifications: list[str]):
+        textgen_config = TextGenerationConfig(
+            n=1,
+            temperature=0.4,
+            model=self.model
+        )
+
+        chart_result = self.lida_mgr.edit(
+            code=self.chart_code,
+            summary=self.summary,
+            instructions=modifications,
+            textgen_config=textgen_config
         )
 
         return chart_result
