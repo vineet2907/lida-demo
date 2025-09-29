@@ -1,4 +1,4 @@
-# LIDA Retail Data Analytics App
+# AI Powered Data Analytics
 
 This project demonstrates an AI-powered data analytics app using [LIDA](https://github.com/microsoft/lida), OpenAI, and Streamlit.
 
