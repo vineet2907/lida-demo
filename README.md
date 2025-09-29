@@ -29,9 +29,9 @@ This project demonstrates an AI-powered data analytics app using [LIDA](https://
    python scripts/generate_mock_data.py
    ```
    Optional Arguments:
-   - **startDate**: start date , default - today
-   - **endDate**: end date, default - today + 30 days
-   - **rows**: no. of rows to generate in the data set, default - 30
+   - `start-date`: start date , default - today
+   - `end-date`: end date, default - today + 30 days
+   - `rows`: no. of rows to generate in the data set, default - 30
    ```bash
    python scripts/generate_mock_data.py --start-date '2025-01-13' --end-date '2025-03-31' --rows 40
    ```
