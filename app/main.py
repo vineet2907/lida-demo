@@ -45,13 +45,25 @@ def render_chart(code):
     else:
         st.warning("No plot function found in the generated code.")
 
+def render_chart_as_image(raster):
+    if raster:
+        from PIL import Image
+        import io
+        import base64
+
+        imgdata = base64.b64decode(raster)
+        img = Image.open(io.BytesIO(imgdata))
+        st.image(img, use_container_width=True, width="stretch")
+    else:
+        st.warning("No plot function found in the generated code.")
+
 st.set_page_config(layout="wide")
 st.title("LIDA demonstration")
 st.write("Automatic Generation of Visualizations and Infographics using Large Language Models")
 
 openai_api_key = os.environ.get("OPENAI_API_KEY")
 if not openai_api_key:
-    st.error("OPENAI_API_KEY environment variable not found. Please set it before running the app.")
+    st.error("OPENAI_API_KEY environment variable not found.")
     st.stop()
 
 if "lida_mgr" not in st.session_state:
@@ -64,22 +76,26 @@ if uploaded_file is None:
     st.stop()
 
 df = pd.read_csv(uploaded_file)
-st.subheader("Preview of top 15 rows of uploaded data")
-st.dataframe(df.head(15))
+st.write("Preview (top 15 rows)")
+st.dataframe(df.head(15), hide_index=True)
 
-summarize_tab, goals_tab, viz_tab = st.tabs(["Summarize", "Goals", "Visualizations"])
+summarize_tab, goals_tab, viz_tab = st.tabs(["Summary", "Goals", "Visualizations"])
 
 with summarize_tab:
-    if st.button("Generate Summary"):
+    if lida_mgr.summary:
+        render_summary(lida_mgr.summary)
+    else:
         with st.spinner("Generating summary with LIDA..."):
             lida_mgr.summarize(df)
             render_summary(lida_mgr.summary)
-    elif lida_mgr.summary:
-        render_summary(lida_mgr.summary)
 
 with goals_tab:
     if lida_mgr.summary:
-        persona = st.text_input("Enter persona for goal generation (e.g., Store Manager, Category Manager, etc.)")
+        example_personas = lida_mgr.personas()
+        persona = st.text_input("Enter persona for goal generation")
+        st.write("Example personas:")
+        for p in example_personas:
+            st.write(f"- **{p.persona}**: {p.rationale}")
         if persona:
             if lida_mgr.persona != persona or not lida_mgr.goals:
                 with st.spinner("Generating goals for persona..."):
@@ -91,15 +107,14 @@ with goals_tab:
 
 with viz_tab:
     if lida_mgr.selected_goal:
+        st.write(f"**{lida_mgr.persona}**")
         goal = lida_mgr.selected_goal
-        st.write(f"**{goal.question}**")
+        st.write(goal.question)
         st.write(goal.rationale)
+        st.write(goal.visualization)
         with st.spinner("Generating visualizations..."):
-            vizs = lida_mgr.generate_chart()
-        viz_titles = [f'Visualization {i+1}' for i in range(len(vizs))]
-        selected_viz_title = st.selectbox('Choose a visualization', options=viz_titles, index=0)
-        selected_viz = vizs[viz_titles.index(selected_viz_title)]
-        lida_mgr.chart_code = selected_viz.code
+            vizs = lida_mgr.chart()
+        lida_mgr.selected_visualization = vizs[0]
         chart, chart_edits = st.columns([2, 1])
         with chart_edits:
             modifications = st.text_area(
@@ -113,19 +128,37 @@ with viz_tab:
                     with st.spinner("Editing visualization..."):
                         edited_vizs = lida_mgr.edit_chart(mod_list)
                     if edited_vizs:
-                        lida_mgr.chart_code = edited_vizs[0].code
+                        lida_mgr.selected_visualization = edited_vizs[0]
                         st.write("You requested the following modifications:")
                         for mod in mod_list:
                             st.write(f"- {mod}")
                     else:
                         st.warning("No edited visualizations returned.")
         with chart:
-            if lida_mgr.chart_code:
-                render_chart(lida_mgr.chart_code)
+            if lida_mgr.selected_visualization and lida_mgr.selected_visualization.code:
+                #render_chart(lida_mgr.chart_code)
+                render_chart_as_image(lida_mgr.selected_visualization.raster)
             else:
                 st.warning("No code found for the selected visualization.")
+        
+        with st.expander("Visualization Code", expanded=False):
+            st.code(lida_mgr.selected_visualization.code, language='python')
+            with st.spinner("Evaluating visualization code..."):
+                evaluations = lida_mgr.evaluate()
+                for eval in evaluations:
+                    st.write("Evaluation:")
+                    eval_df = pd.DataFrame(eval)
+                    st.dataframe(eval_df, hide_index=True)
+                    
 
-        with st.expander("Show Visualization Code", expanded=False):
-            st.code(lida_mgr.chart_code)
+        with st.expander("Recommendations", expanded=False):
+            recommendations = lida_mgr.recommend()
+            if recommendations:
+                for rec in recommendations:
+                    if rec.raster:
+                        #render_chart(rec.code)
+                        render_chart_as_image(rec.raster)
+            else:
+                st.write("No recommendations available.")
     else:
         st.info("Select a goal in the 'Goals' tab to enable visualizations.")

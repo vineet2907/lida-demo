@@ -32,7 +32,7 @@ promocodes = ['PROMO10', 'PROMO20', 'PROMO30', '']
 parser = argparse.ArgumentParser(description='Generate mock retail data CSV.')
 parser.add_argument('--start-date', type=str, default=None, help='Start date (YYYY-MM-DD)')
 parser.add_argument('--end-date', type=str, default=None, help='End date (YYYY-MM-DD)')
-parser.add_argument('--rows', type=int, default=500, help='Number of rows to generate')
+parser.add_argument('--rows', type=int, default=30, help='Number of rows to generate')
 args = parser.parse_args()
 
 if args.start_date and args.end_date:

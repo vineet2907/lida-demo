@@ -1,40 +1,45 @@
 # LIDA Retail Data Analytics App
 
-This project demonstrates an AI-powered data analytics app for retailers/CPGs using [LIDA](https://github.com/microsoft/lida), OpenAI, and Streamlit.
+This project demonstrates an AI-powered data analytics app using [LIDA](https://github.com/microsoft/lida), OpenAI, and Streamlit.
 
 ## Features
-- Upload and preview CSV retail data
-- Summarize dataset using LIDA and OpenAI GPT models
+- Upload and preview CSV data
+- Summarize dataset
 - Generate goals for a selected persona
-- Select a goal and generate visualizations using LIDA
-- View and execute generated matplotlib code for visualizations
+- Generate and edit visualizations
+- Evaluate the visualization code and view recommendations related to selected goal
 
 ## Setup
 1. **Clone the repository**
 2. **Create and activate a Python virtual environment:**
-   ```zsh
+   ```bash
    python3 -m venv .venv
    source .venv/bin/activate
    ```
 3. **Install dependencies:**
-   ```zsh
+   ```bash
    pip install -r requirements.txt
    ```
 4. **Set your OpenAI API key as an environment variable:**
-   ```zsh
+   ```bash
    export OPENAI_API_KEY=your_openai_api_key_here
    ```
+5. **Generate mock data (optional)**
+   ```bash
+   python scripts/generate_mock_data.py
+   ```
+   Optional Arguments:
+   - **startDate**: start date , default - today
+   - **endDate**: end date, default - today + 30 days
+   - **rows**: no. of rows to generate in the data set, default - 30
+   ```bash
+   python scripts/generate_mock_data.py --start-date '2025-01-13' --end-date '2025-03-31' --rows 40
+   ```
+   This will create a CSV file in the `data/` directory.
+6. **Run the app**
+   ```bash
+   streamlit run app/main.py
+   ```
 
-## Usage
-Run the Streamlit app:
-```zsh
-streamlit run app/main.py
-```
-
-## Generating Mock Data
-To generate example retail data for testing, run:
-```zsh
-python scripts/generate_mock_data.py
-```
-This will create a CSV file in the `data/` directory.
-
+## References
+- [LIDA](https://github.com/microsoft/lida)
