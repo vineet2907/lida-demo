@@ -66,14 +66,17 @@ if not openai_api_key:
     st.error("OPENAI_API_KEY environment variable not found.")
     st.stop()
 
-if "lida_mgr" not in st.session_state:
-    st.session_state.lida_mgr = LidaManager(openai_api_key)
-lida_mgr = st.session_state.lida_mgr
-
 uploaded_file = st.file_uploader("Upload a CSV file", type=["csv"], key="uploaded_file")
 if uploaded_file is None:
     st.info("Please upload a CSV file to continue.")
+    if "lida_mgr" in st.session_state:
+        st.session_state.lida_mgr = None
     st.stop()
+
+if "lida_mgr" not in st.session_state or st.session_state.lida_mgr is None:
+    st.session_state.lida_mgr = LidaManager(openai_api_key)
+
+lida_mgr = st.session_state.lida_mgr
 
 df = pd.read_csv(uploaded_file)
 st.write("Preview (top 15 rows)")
